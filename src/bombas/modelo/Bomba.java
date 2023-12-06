@@ -5,6 +5,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.HashMap;
 
 import bombas.IBomba;
 import bombas.controlador.BombaController;
@@ -17,11 +18,13 @@ public class Bomba extends UnicastRemoteObject implements IBomba{
 	private static final long serialVersionUID = 1L;
 	private boolean[][] bombas;
 	private BombaController controlador;
+	private HashMap<String, Boolean> posicionesIngresadas;
 	
 	public Bomba() throws RemoteException {
 		System.out.println("Iniciando");
 		bombas = new boolean[6][6];
-		inicializarBombas();
+		posicionesIngresadas = new HashMap<String, Boolean>();
+		
 		iniciarServidor();
 	}
 	
@@ -32,33 +35,53 @@ public class Bomba extends UnicastRemoteObject implements IBomba{
 	@Override
 	public void procesarPosicion(String usuario, int x, int y) throws RemoteException {
 		
-		boolean explota = bombas[x][y];		
-		controlador.actualizarPosicion(usuario, x, y, explota);
+		
+		if(usuario.length()>0 && !usuario.equalsIgnoreCase("null")) {
+			if(x>=0 && x<6 && y>=0 && y<6) {		
+				if(posicionesIngresadas.get(x+"-"+y)==null){
+					posicionesIngresadas.put(x+"-"+y, true);
+				
+					boolean explota = bombas[x][y];		
+					controlador.actualizarPosicion(usuario, x, y, explota);
+				}else {
+					String mensaje = "o.O REPETIDO";
+					controlador.notificarIrregularidad(usuario, x, y, mensaje);
+				}
+			}else {
+				String mensaje = "o.O FUERA DE LÍMITES";
+				controlador.notificarIrregularidad(usuario, x, y, mensaje);
+			}
+		}else {
+			String mensaje = "o.O Y EL USUARIO?";
+			controlador.notificarIrregularidad(usuario, x, y, mensaje);
+		}
 	}
 	
-	public void inicializarBombas() {
+	public int inicializarBombas() {
+		
+		int cantidadBombas = 0;
+		
+		do {
+			cantidadBombas = generarAleatorioTablero();
+		}while(cantidadBombas<12);
+		
+		return cantidadBombas;
+	}
+	
+	private int generarAleatorioTablero() {
 		int cantidadBombas = 0;
 		
 		for(int i=0;i<6;i++) {
 			for(int u=0;u<6;u++) {
 				int random = (int)(Math.random()*10);
 				
-				if(random>=8) {
+				if(random>=7) {
 					bombas[i][u] = true;
 					cantidadBombas++;
 				}
 			}
 		}
-		
-		for(int i=0;i<6;i++) {
-			for(int u=0;u<6;u++) {
-				System.out.print("[ "+ bombas[i][u] + "]");
-			}
-			System.out.println();
-		}
-		
-		System.out.println("Cantidad bombas = "+cantidadBombas);
-		
+		return cantidadBombas;
 	}
 	
 	public void iniciarServidor() {

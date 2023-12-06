@@ -130,6 +130,9 @@ public class BombaController implements Initializable {
     @FXML
     private TextArea taMovimientos;
     
+    @FXML
+    private Label lblBombas;
+    
     private Bomba bomba;
     
     public BombaController() {
@@ -142,7 +145,16 @@ public class BombaController implements Initializable {
 
     @FXML
     void reiniciar(ActionEvent event) {
-
+    	int bombas = bomba.inicializarBombas();
+    	lblBombas.setText("Cantidad bombas = "+bombas);
+    }
+    
+    public void notificarIrregularidad(String usuario, int x, int y, String mensaje) {
+    	Platform.runLater(new Runnable() {
+            @Override public void run() {
+            	taMovimientos.appendText(usuario + "> ("+x+","+y+") = "+mensaje+" >|\n");
+            }
+    	});
     }
 
 	public void actualizarPosicion(String usuario, int x, int y, boolean explota) {
